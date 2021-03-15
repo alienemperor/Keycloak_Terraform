@@ -1,0 +1,8 @@
+realm_name    = "master"
+keycloak_URL  = "http://localhost:8080"
+keycloak_user = "admin"
+keycloak_pass = "admin"
+ldap_user     = "AD_Service_Account"
+ldap_pass     = "AD_Password"
+ldap_URL      = "ldap://localhost:389"
+ldap_UsersDN  = "dc=example,dc=org"
