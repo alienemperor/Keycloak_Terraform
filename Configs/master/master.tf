@@ -30,27 +30,43 @@ variable "keycloak_pass" {
     sensitive   = true
 }
 
+variable "ldap_connectionName" {
+    description = "Name for the LDAP connection"
+    type       = string
+}
+
 variable "ldap_user" {
-    description = "username for the LDAP connection user"
+    description = "Username for the LDAP connection user"
     type        = string
     sensitive   = true
 }
 
 variable "ldap_pass" {
-    description = "password for the LDAP connection user"
+    description = "Password for the LDAP connection user"
     type        = string
     sensitive   = true
 }
 
 variable "ldap_URL" {
-    description = "url for LDAP connection"
+    description = "URL for LDAP connection"
     type        = string
 }
 
-variable "ldap_UsersDN" {
+variable "ldap_usersDN" {
     description = "DN for users OU"
     type        = string
 }
+
+variable "ldap_groupConnectionName" {
+    description = "Name of the group LDAP mapper"
+    type        = string
+}
+
+variable "ldap_groupsDN" {
+    description = "DN for groups OU"
+    type        = string
+}
+
 
 ########## Providers ##########
 
@@ -70,7 +86,7 @@ resource "keycloak_realm" "realm" {
 
 #Set up AD connection
 resource "keycloak_ldap_user_federation" "AD_Connection" {
-  name     = "ldap"
+  name     = var.ldap_connectionName
   realm_id = keycloak_realm.realm.id
   enabled  = true
 
@@ -82,9 +98,27 @@ resource "keycloak_ldap_user_federation" "AD_Connection" {
     "organizationalRole"
   ]
   connection_url          = var.ldap_URL
-  users_dn                = var.ldap_UsersDN
+  users_dn                = var.ldap_usersDN
   bind_dn                 = var.ldap_user
   bind_credential         = var.ldap_pass
+}
+
+#Sync Groups from AD
+resource "keycloak_ldap_group_mapper" "Ad_group_mapper" {
+    realm_id                 = keycloak_realm.realm.id
+    ldap_user_federation_id  = keycloak_ldap_user_federation.AD_Connection.id
+    name                     = var.ldap_groupConnectionName
+
+    ldap_groups_dn                 = var.ldap_groupsDN
+    group_name_ldap_attribute      = "cn"
+    group_object_classes           = [
+        "group"
+    ]
+    preserve_group_inheritance     = "false"
+    membership_attribute_type      = "DN"
+    membership_ldap_attribute      = "member"
+    membership_user_ldap_attribute = "cn"
+    memberof_ldap_attribute        = "memberOf"
 }
 
 # Set up a local user
